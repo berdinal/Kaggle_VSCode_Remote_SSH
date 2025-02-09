@@ -28,7 +28,12 @@ tunnel = ngrok.connect(8888, "http")
 ngrok_url = tunnel.public_url
 
 if ngrok_url:
-    hostname, port = ngrok_url.split("://")[1].split(":")
+    # Extract the hostname from the URL
+    if '://' in ngrok_url:
+        hostname = ngrok_url.split("://")[1]
+    else:
+        hostname = ngrok_url
+    
     print(f"ngrok tunnel opened at: {ngrok_url}")
     print("You can access the Jupyter notebook at the following URL:")
     print(f"{ngrok_url}")
