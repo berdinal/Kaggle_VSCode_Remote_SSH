@@ -1,49 +1,49 @@
-import random
-import string
-import subprocess
 import sys
 from pyngrok import conf, ngrok
 
 if len(sys.argv) != 2:
     print("Usage: python setup_kaggle_ssh.py <ngrok_authtoken>")
-    exit(1)
+    sys.exit(1)
 
 ngrok_auth_token = sys.argv[1]
 
-def generate_secure_jupyter_password():
-    """ Generate a random, strong Jupyter notebook password """
-    characters = string.ascii_letters + string.digits + "!@#$%^*()-_=+{}[]<>.,?"
-    return ''.join(random.choices(characters, k=16))
+# Inform the user that key‐based authentication is assumed.
+print("Configuring ngrok tunnel for SSH access using key-based authentication.")
+print("Ensure that your SSH daemon is configured to use public-key authentication only.")
 
-jupyter_password = generate_secure_jupyter_password()
-print(f"Setting password for Jupyter Notebook: {jupyter_password}")
-
-# Secure Jupyter by setting a password (requires Jupyter installed)
-subprocess.run(f"jupyter notebook --generate-config -y", shell=True, check=True)
-subprocess.run(
-    f"echo \"c.NotebookApp.password = u'$(python3 -c \"from notebook.auth import passwd; print(passwd('{jupyter_password}'))\")'\" >> ~/.jupyter/jupyter_notebook_config.py",
-    shell=True,
-    check=True
-)
-
-# Configure and start ngrok
+# Configure ngrok with the provided token and region.
 conf.get_default().auth_token = ngrok_auth_token
-conf.get_default().region = 'eu'  # Change region as needed
+conf.get_default().region = 'ap'
 
-tunnel = ngrok.connect(8888, "http")
+# Start the ngrok tunnel on port 22 using TCP.
+try:
+    tunnel = ngrok.connect("22", "tcp")
+except Exception as e:
+    print("Failed to start ngrok tunnel:", e)
+    sys.exit(1)
+
 ngrok_url = tunnel.public_url
 
 if ngrok_url:
-    print(f"ngrok tunnel opened at: {ngrok_url}")
-    print("Access Jupyter Notebook at the following URL (login required):")
-    print(f"{ngrok_url}")
-    sys.stdout.flush()
+    try:
+        # Expected format is: tcp://<hostname>:<port>
+        _, address = ngrok_url.split("://")
+        hostname, port = address.split(":")
+        print(f"ngrok tunnel opened at: {ngrok_url}")
+        print("To connect via SSH, use the following command:")
+        print(f"ssh root@{hostname} -p {port}")
+    except Exception as e:
+        print("Error parsing ngrok URL:", e)
+        sys.exit(1)
 else:
     print("Failed to start ngrok tunnel.")
-    exit(1)
+    sys.exit(1)
 
-ngrok_process = ngrok.get_ngrok_process()
+print("Press Ctrl-C to terminate the tunnel.")
+
 try:
+    # Wait for the tunnel process to finish (or until interrupted)
+    ngrok_process = ngrok.get_ngrok_process()
     ngrok_process.proc.wait()
 except KeyboardInterrupt:
     print("Shutting down ngrok tunnel")
