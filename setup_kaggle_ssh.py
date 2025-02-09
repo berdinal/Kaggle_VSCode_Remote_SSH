@@ -23,15 +23,15 @@ conf.get_default().auth_token = ngrok_auth_token
 conf.get_default().region = 'ap'
 
 # start ngrok tunnel
-tunnel = ngrok.connect("22", "http")
+# Open ngrok tunnel on Jupyter's default port 8888
+tunnel = ngrok.connect(8888, "http")
 ngrok_url = tunnel.public_url
 
 if ngrok_url:
     hostname, port = ngrok_url.split("://")[1].split(":")
     print(f"ngrok tunnel opened at: {ngrok_url}")
-    print("To connect via SSH, use the following command:")
-    print(f"ssh root@{hostname} -p {port}")
-    print(f"Password: {password}")
+    print("You can access the Jupyter notebook at the following URL:")
+    print(f"{ngrok_url}")
     sys.stdout.flush()
 else:
     print("Failed to start ngrok tunnel.")
