@@ -23,7 +23,7 @@ conf.get_default().auth_token = ngrok_auth_token
 conf.get_default().region = 'ap'
 
 # start ngrok tunnel
-tunnel = ngrok.connect("22", "tcp")
+tunnel = ngrok.connect("22", "http")
 ngrok_url = tunnel.public_url
 
 if ngrok_url:
