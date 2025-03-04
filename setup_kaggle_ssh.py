@@ -2,7 +2,6 @@ import random
 import string
 import subprocess
 import sys
-
 from pyngrok import conf, ngrok
 
 if len(sys.argv) != 2:
@@ -11,31 +10,32 @@ if len(sys.argv) != 2:
 
 ngrok_auth_token = sys.argv[1]
 
-def generate_random_password(length=16):
-    characters = (string.ascii_letters + string.digits + "!@#$%^*()-_=+{}[]<>.,?")
-    return ''.join(random.choices(characters, k=length))
+def generate_secure_jupyter_password():
+    """ Generate a random, strong Jupyter notebook password """
+    characters = string.ascii_letters + string.digits + "!@#$%^*()-_=+{}[]<>.,?"
+    return ''.join(random.choices(characters, k=16))
 
-password = generate_random_password()
-print(f"Setting password for root user: {password}")
-subprocess.run(f"echo 'root:{password}' | sudo chpasswd", shell=True, check=True)
+jupyter_password = generate_secure_jupyter_password()
+print(f"Setting password for Jupyter Notebook: {jupyter_password}")
 
+# Secure Jupyter by setting a password (requires Jupyter installed)
+subprocess.run(f"jupyter notebook --generate-config -y", shell=True, check=True)
+subprocess.run(
+    f"echo \"c.NotebookApp.password = u'$(python3 -c \"from notebook.auth import passwd; print(passwd('{jupyter_password}'))\")'\" >> ~/.jupyter/jupyter_notebook_config.py",
+    shell=True,
+    check=True
+)
+
+# Configure and start ngrok
 conf.get_default().auth_token = ngrok_auth_token
-conf.get_default().region = 'ap'
+conf.get_default().region = 'eu'  # Change region as needed
 
-# start ngrok tunnel
-# Open ngrok tunnel on Jupyter's default port 8888
 tunnel = ngrok.connect(8888, "http")
 ngrok_url = tunnel.public_url
 
 if ngrok_url:
-    # Extract the hostname from the URL
-    if '://' in ngrok_url:
-        hostname = ngrok_url.split("://")[1]
-    else:
-        hostname = ngrok_url
-    
     print(f"ngrok tunnel opened at: {ngrok_url}")
-    print("You can access the Jupyter notebook at the following URL:")
+    print("Access Jupyter Notebook at the following URL (login required):")
     print(f"{ngrok_url}")
     sys.stdout.flush()
 else:
@@ -44,7 +44,6 @@ else:
 
 ngrok_process = ngrok.get_ngrok_process()
 try:
-    # hit ctrl-c to stop ngrok, or just power off the noteboko
     ngrok_process.proc.wait()
 except KeyboardInterrupt:
     print("Shutting down ngrok tunnel")

@@ -5,15 +5,17 @@ extensions=(
   "ms-python.python"
   "ms-toolsai.jupyter"
   "CS50.ddb50"
-  # add more extensions here
+  # Add more extensions here
 )
 
-# Install each extension
+# Install each extension sequentially with error handling
 for extension in "${extensions[@]}"; do
-  code --install-extension $extension &
+  echo "Installing extension: $extension..."
+  if code --install-extension "$extension"; then
+    echo "Successfully installed: $extension"
+  else
+    echo "Failed to install: $extension" >&2
+  fi
 done
 
-# Wait for all background jobs (extension installations) to complete
-wait
-
-echo "All extensions have been installed."
+echo "All extensions have been processed."
