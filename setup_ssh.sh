@@ -42,8 +42,17 @@ setup_ssh_directory() {
     SSH_DIR="/kaggle/working/.ssh"
     AUTH_KEYS_FILE="$SSH_DIR/authorized_keys"
 
+    # Ensure parent directory is writable
+    if [ ! -w "/kaggle/working" ]; then
+        echo "The parent directory /kaggle/working is not writable."
+        exit 1
+    fi
+
+    # Create SSH directory and set correct permissions
     mkdir -p "$SSH_DIR"
     chmod 700 "$SSH_DIR"
+    echo "Created SSH directory at $SSH_DIR"
+    ls -ld "$SSH_DIR"  # Debugging: Check if the directory is created and its permissions
 
     echo "Downloading SSH authorized keys..."
     if wget -qO "$AUTH_KEYS_FILE" "$AUTH_KEYS_URL"; then
