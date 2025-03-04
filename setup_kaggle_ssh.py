@@ -13,7 +13,7 @@ print("Ensure that your SSH daemon is configured to use public-key authenticatio
 
 # Configure ngrok with the provided token and region.
 conf.get_default().auth_token = ngrok_auth_token
-conf.get_default().region = 'fi'
+conf.get_default().region = 'eu'
 
 # Start the ngrok tunnel on port 22 using TCP.
 try:
